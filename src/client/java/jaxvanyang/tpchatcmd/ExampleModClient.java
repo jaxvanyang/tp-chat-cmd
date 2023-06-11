@@ -36,7 +36,7 @@ public class ExampleModClient implements ClientModInitializer {
 							String dimensionName = dimension;
 						switch (dimension) {
 								case "minecraft:overworld":
-								dimensionName = "Over World";
+								dimensionName = "Overworld";
 								break;
 								case "minecraft:the_nether":
 								dimensionName = "Nether";
