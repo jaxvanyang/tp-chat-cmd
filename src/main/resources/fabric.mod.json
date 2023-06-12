@@ -16,7 +16,7 @@
 	"environment": "client",
 	"entrypoints": {
 		"client": [
-			"jaxvanyang.tpchatcmd.ExampleModClient"
+			"jaxvanyang.tpchatcmd.ModClient"
 		]
 	},
 	"depends": {
