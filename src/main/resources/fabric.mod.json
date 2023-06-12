@@ -3,32 +3,22 @@
 	"id": "tp-chat-cmd",
 	"version": "${version}",
 	"name": "TP Chat Cmd",
-	"description": "This is an example description! Tell everyone what your mod is about!",
+	"description": "/tpchat is simple command that sends clickable messages for teleporting. You can click the highlighted text to teleport. By the way, it uses the vanilla /teleport like syntax.\nNote: you should has /tellraw permission to use this command.",
 	"authors": [
-		"Me!"
+		"Jax Young"
 	],
 	"contact": {
-		"homepage": "https://fabricmc.net/",
-		"sources": "https://github.com/FabricMC/fabric-example-mod"
+		"homepage": "https://github.com/jaxvanyang/tp-chat-cmd",
+		"sources": "https://github.com/jaxvanyang/tp-chat-cmd"
 	},
-	"license": "CC0-1.0",
+	"license": "MIT",
 	"icon": "assets/tp-chat-cmd/icon.png",
-	"environment": "*",
+	"environment": "client",
 	"entrypoints": {
-		"main": [
-			"jaxvanyang.tpchatcmd.ExampleMod"
-		],
 		"client": [
 			"jaxvanyang.tpchatcmd.ExampleModClient"
 		]
 	},
-	"mixins": [
-		"tp-chat-cmd.mixins.json",
-		{
-			"config": "tp-chat-cmd.client.mixins.json",
-			"environment": "client"
-		}
-	],
 	"depends": {
 		"fabricloader": ">=0.14.21",
 		"minecraft": "~1.20",
