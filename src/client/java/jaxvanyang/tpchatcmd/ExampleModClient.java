@@ -1,10 +1,12 @@
 package jaxvanyang.tpchatcmd;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import java.lang.Math;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
+import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.Vec3d;
@@ -23,9 +25,12 @@ public class ExampleModClient implements ClientModInitializer {
 				dispatcher.register(
 					literal("tpchat").executes(
 						context -> {
-							final String commandTemplate = "/execute in %s run tp @s %.0f %.0f %.0f";
-							final String textTemplate = "%s: %.0f %.0f %.0f";
+							final String chatCommandTemplate = "tellraw @a %s";
+							final String prefixTemplate = "<%s> ";
+							final String tpTemplate = "/execute in %s run tp @s %.0f %.0f %.0f";
+							final String coordsTemplate = "%s (%.0f %.0f %.0f)";
 							final FabricClientCommandSource source = context.getSource();
+							final ClientPlayerEntity player = source.getPlayer();
 							final World world = source.getWorld();
 							final String dimension = world.getRegistryKey().getValue().toString();
 							final Vec3d pos = source.getPosition();
@@ -34,7 +39,7 @@ public class ExampleModClient implements ClientModInitializer {
 							double z = Math.round(pos.z);
 
 							String dimensionName = dimension;
-						switch (dimension) {
+							switch (dimension) {
 								case "minecraft:overworld":
 								dimensionName = "Overworld";
 								break;
@@ -47,27 +52,36 @@ public class ExampleModClient implements ClientModInitializer {
 							}
 
 							final String command = String.format(
-								commandTemplate, dimension, x, y, z
+								tpTemplate, dimension, x, y, z
 							);
 							final JsonObject clickEvent = new JsonObject();
 							// final JsonObject hoverEvent = new JsonObject();
-							final JsonObject msgJson = new JsonObject();
+							final JsonObject clickableMsgJson = new JsonObject();
+							final JsonArray msgJson = new JsonArray();
 
 							clickEvent.addProperty("action", "run_command");
 							clickEvent.addProperty("value", command);
 							// hoverEvent.addProperty("action", "show_text");
 							// hoverEvent.addProperty("contents", "X Y Z");
-							msgJson.add("clickEvent", clickEvent);
-							// msgJson.add("hoverEvent", hoverEvent);
-							msgJson.addProperty(
+							clickableMsgJson.add("clickEvent", clickEvent);
+							// clickableMsgJson.add("hoverEvent", hoverEvent);
+							clickableMsgJson.addProperty(
 								"text",
-								String.format(textTemplate, dimensionName, x, y, z)
+								String.format(coordsTemplate, dimensionName, x, y, z)
 							);
-							msgJson.addProperty("color", "green");
-							msgJson.addProperty("underlined", true);
+							clickableMsgJson.addProperty("color", "green");
+							clickableMsgJson.addProperty("underlined", true);
 
-							context.getSource().sendFeedback(
-								Text.Serializer.fromJson(msgJson)
+							msgJson.add(
+								String.format(
+									prefixTemplate,
+									player.getName().getString()
+								)
+							);
+							msgJson.add(clickableMsgJson);
+
+							player.networkHandler.sendChatCommand(
+								String.format(chatCommandTemplate, msgJson.toString())
 							);
 
 							return 0;
