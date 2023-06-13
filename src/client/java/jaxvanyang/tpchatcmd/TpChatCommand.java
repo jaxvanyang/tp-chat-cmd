@@ -29,7 +29,7 @@ public final class TpChatCommand {
 
 	public static int tpchat(FabricClientCommandSource source) {
 		// Context constants
-		final IntegratedServer integratedServer = source.getClient().getServer();
+		final Boolean isDedicated = source.getClient().getServer() == null;
 		final ClientPlayerEntity player = source.getPlayer();
 		final World world = source.getWorld();
 		final Vec3d pos = source.getPosition();
@@ -80,7 +80,7 @@ public final class TpChatCommand {
 		final int chatCommandLength = chatCommand.length();
 
 		// Refer to https://github.com/jaxvanyang/tp-chat-cmd/issues/5
-		if (chatCommandLength > CHAT_LENTH_LIMIT && integratedServer == null) {
+		if (isDedicated && chatCommandLength > CHAT_LENTH_LIMIT) {
 			source.sendFeedback(
 				Text.literal(
 					String.format(
