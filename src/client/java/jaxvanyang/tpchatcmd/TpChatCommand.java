@@ -3,6 +3,7 @@ package jaxvanyang.tpchatcmd;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.network.ClientPlayerEntity;
@@ -13,6 +14,7 @@ import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
+import static com.mojang.brigadier.arguments.StringArgumentType.getString;
 import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.*;
 
 public final class TpChatCommand {
@@ -21,10 +23,12 @@ public final class TpChatCommand {
 
 	public final static String CHAT_COMMAND_TEMPLATE = "tellraw @a %s";
 	public final static String PREFIX_TEMPLATE = "<%s> ";
+	public final static String POSTFIX_TEMPLATE = ": %s";
 	public final static String TP_TEMPLATE = "/execute in %s run tp @s %.0f %.0f %.0f";
 	public final static String COORDS_TEMPLATE = "%s (%.0f %.0f %.0f)";
 
 	private final static String LOCATION_ARGNAME = "location";
+	private final static String DESC_ARGNAME = "description";
 
 	// Workaround for BlockPosArgumentType.getBlockPos() not support
 	// FabricClientCommandSource
@@ -39,13 +43,17 @@ public final class TpChatCommand {
 	public static void register(
 		CommandDispatcher<FabricClientCommandSource> dispatcher) {
 		dispatcher.register(literal("tpchat")
-			.executes(ctx -> tpchat(ctx.getSource(), null))
+			.executes(ctx -> tpchat(ctx.getSource(), null, null))
 			.then(argument(LOCATION_ARGNAME, BlockPosArgumentType.blockPos())
 				.executes(
-					ctx -> tpchat(ctx.getSource(), getBlockPos(ctx, LOCATION_ARGNAME)))));
+					ctx -> tpchat(ctx.getSource(), getBlockPos(ctx, LOCATION_ARGNAME), null))
+				.then(argument(DESC_ARGNAME, StringArgumentType.greedyString())
+					.executes(
+						ctx -> tpchat(ctx.getSource(), getBlockPos(ctx, LOCATION_ARGNAME),
+							getString(ctx, DESC_ARGNAME))))));
 	}
 
-	public static int tpchat(FabricClientCommandSource source, BlockPos location) {
+	public static int tpchat(FabricClientCommandSource source, BlockPos location, String desc) {
 		// Context constants
 		final Boolean isDedicated = source.getClient().getServer() == null;
 		final ClientPlayerEntity player = source.getPlayer();
@@ -86,6 +94,9 @@ public final class TpChatCommand {
 
 		chatCommandJson.add(String.format(PREFIX_TEMPLATE, playerName));
 		chatCommandJson.add(clickableText);
+		if (desc != null) {
+			chatCommandJson.add(String.format(POSTFIX_TEMPLATE, desc));
+		}
 
 		clickableText.addProperty("text", clickableTextString);
 		clickableText.addProperty("color", "green");
@@ -101,11 +112,15 @@ public final class TpChatCommand {
 
 		// Refer to https://github.com/jaxvanyang/tp-chat-cmd/issues/5
 		if (isDedicated && chatCommandLength > CHAT_LENTH_LIMIT) {
-			source.sendFeedback(
+			source.sendError(
 				Text.literal(
 					String.format(
-						"The raw JSON text of your message exceeds the chat length limit." +
-						"Yours is %d characters long, while the limit is %d.",
+						"""
+						[ERROR] /tpchat failed: Chat message too long.
+						Technically, The raw Json text of your message exceeds
+						the chat length limit. Yours is %d characters long,
+						while the limit is %d. Try to reduce your description.
+						""",
 						chatCommandLength,
 						CHAT_LENTH_LIMIT)));
 
