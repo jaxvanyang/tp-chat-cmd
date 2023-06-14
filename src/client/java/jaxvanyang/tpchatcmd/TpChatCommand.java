@@ -3,10 +3,14 @@ package jaxvanyang.tpchatcmd;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.context.CommandContext;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.server.integrated.IntegratedServer;
+import net.minecraft.command.argument.BlockPosArgumentType;
+import net.minecraft.command.argument.PosArgument;
+import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.Text;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.*;
@@ -20,14 +24,28 @@ public final class TpChatCommand {
 	public final static String TP_TEMPLATE = "/execute in %s run tp @s %.0f %.0f %.0f";
 	public final static String COORDS_TEMPLATE = "%s (%.0f %.0f %.0f)";
 
-	public static void register(
-		CommandDispatcher<FabricClientCommandSource> dispatcher
-	) {
-		dispatcher.register(literal("tpchat")
-			.executes(ctx -> tpchat(ctx.getSource())));
+	private final static String LOCATION_ARGNAME = "location";
+
+	// Workaround for BlockPosArgumentType.getBlockPos() not support
+	// FabricClientCommandSource
+	private static BlockPos getBlockPos(CommandContext<FabricClientCommandSource> context, String name) {
+		final ServerCommandSource dummyServerCommandSource = new ServerCommandSource(null,
+			context.getSource().getPosition(),
+			null, null, 0, null, null, null, null);
+
+		return context.getArgument(name, PosArgument.class).toAbsoluteBlockPos(dummyServerCommandSource);
 	}
 
-	public static int tpchat(FabricClientCommandSource source) {
+	public static void register(
+		CommandDispatcher<FabricClientCommandSource> dispatcher) {
+		dispatcher.register(literal("tpchat")
+			.executes(ctx -> tpchat(ctx.getSource(), null))
+			.then(argument(LOCATION_ARGNAME, BlockPosArgumentType.blockPos())
+				.executes(
+					ctx -> tpchat(ctx.getSource(), getBlockPos(ctx, LOCATION_ARGNAME)))));
+	}
+
+	public static int tpchat(FabricClientCommandSource source, BlockPos location) {
 		// Context constants
 		final Boolean isDedicated = source.getClient().getServer() == null;
 		final ClientPlayerEntity player = source.getPlayer();
@@ -37,6 +55,12 @@ public final class TpChatCommand {
 		final String playerName = player.getName().getString();
 
 		double x = pos.x, y = pos.y, z = pos.z;
+
+		if (location != null) {
+			x = location.getX();
+			y = location.getY();
+			z = location.getZ();
+		}
 
 		String dimensionName = dimension;
 		switch (dimension) {
@@ -52,21 +76,18 @@ public final class TpChatCommand {
 		}
 
 		final String tpCommand = String.format(
-			TP_TEMPLATE, dimension, x, y, z
-		);
+			TP_TEMPLATE, dimension, x, y, z);
 		final String clickableTextString = String.format(
-			COORDS_TEMPLATE, dimensionName, x, y, z
-		);
+			COORDS_TEMPLATE, dimensionName, x, y, z);
 
 		final JsonArray chatCommandJson = new JsonArray();
 		final JsonObject clickableText = new JsonObject();
 		final JsonObject clickEvent = new JsonObject();
-		final JsonObject hoverEvent = new JsonObject();
 
 		chatCommandJson.add(String.format(PREFIX_TEMPLATE, playerName));
 		chatCommandJson.add(clickableText);
 
-		clickableText.addProperty( "text", clickableTextString);
+		clickableText.addProperty("text", clickableTextString);
 		clickableText.addProperty("color", "green");
 		clickableText.addProperty("underlined", true);
 		clickableText.add("clickEvent", clickEvent);
@@ -75,8 +96,7 @@ public final class TpChatCommand {
 		clickEvent.addProperty("value", tpCommand);
 
 		final String chatCommand = String.format(
-			CHAT_COMMAND_TEMPLATE, chatCommandJson.toString()
-		);
+			CHAT_COMMAND_TEMPLATE, chatCommandJson.toString());
 		final int chatCommandLength = chatCommand.length();
 
 		// Refer to https://github.com/jaxvanyang/tp-chat-cmd/issues/5
@@ -87,17 +107,13 @@ public final class TpChatCommand {
 						"The raw JSON text of your message exceeds the chat length limit." +
 						"Yours is %d characters long, while the limit is %d.",
 						chatCommandLength,
-						CHAT_LENTH_LIMIT
-					)
-				)
-			);
+						CHAT_LENTH_LIMIT)));
 
 			return -1;
 		}
 
 		player.networkHandler.sendChatCommand(
-			String.format(CHAT_COMMAND_TEMPLATE, chatCommandJson.toString())
-		);
+			String.format(CHAT_COMMAND_TEMPLATE, chatCommandJson.toString()));
 
 		// This commented line is from the Fabric Wiki, but symbol not found.
 		// return Command.SINGLE_SUCCESS;
