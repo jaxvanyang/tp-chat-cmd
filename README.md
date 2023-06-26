@@ -14,7 +14,7 @@ vanalia `/tp` command. You can use it to send clickable message
 to **EVERY ONLINE PLAYER** for teleporting. And it can be used to teleport
 between dimensions, e.g., overworld <-> nether.
 
-![screenshot](src/main/resources/assets/tp-chat-cmd/screenshot.png)
+![screenshot](assets/screenshot.png)
 
 ## Usage
 
