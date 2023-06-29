@@ -21,10 +21,13 @@ public final class TpChatCommand {
 	// TODO: find a constant in official API to replace this
 	public final static int CHAT_LENTH_LIMIT = 256;
 
+	public final static String MINECRAFT_PREFIX = "minecraft:";
+	public final static int MINECRAFT_PREFIX_LEN = MINECRAFT_PREFIX.length();
+
 	public final static String CHAT_COMMAND_TEMPLATE = "tellraw @a %s";
 	public final static String PREFIX_TEMPLATE = "<%s> ";
 	public final static String POSTFIX_TEMPLATE = ": %s";
-	public final static String TP_TEMPLATE = "/execute in %s run tp @s %.0f %.0f %.0f";
+	public final static String TP_TEMPLATE = "/execute in %s run tp %.0f %.0f %.0f";
 	public final static String COORDS_TEMPLATE = "%s (%.0f %.0f %.0f)";
 
 	private final static String LOCATION_ARGNAME = "location";
@@ -59,7 +62,7 @@ public final class TpChatCommand {
 		final ClientPlayerEntity player = source.getPlayer();
 		final World world = source.getWorld();
 		final Vec3d pos = source.getPosition();
-		final String dimension = world.getRegistryKey().getValue().toString();
+		String dimension = world.getRegistryKey().getValue().toString();
 		final String playerName = player.getName().getString();
 
 		double x = pos.x, y = pos.y, z = pos.z;
@@ -70,15 +73,20 @@ public final class TpChatCommand {
 			z = location.getZ();
 		}
 
+		if (dimension.startsWith(MINECRAFT_PREFIX)) {
+			dimension = dimension.substring(MINECRAFT_PREFIX_LEN);
+		}
 		String dimensionName = dimension;
 		switch (dimension) {
-			case "minecraft:overworld":
+			case "overworld":
 			dimensionName = "Overworld";
 			break;
-			case "minecraft:the_nether":
+
+			case "the_nether":
 			dimensionName = "Nether";
 			break;
-			case "minecraft:the_end":
+
+			case "the_end":
 			dimensionName = "End";
 			break;
 		}

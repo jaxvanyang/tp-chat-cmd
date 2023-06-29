@@ -46,7 +46,7 @@ Actually, when you use `/tpchat`, something like this will be
 executed:
 
 ```bash
-/tellraw @a ["<Player> ",{"text":"Nether (9 60 -2)","color":"green","underlined":true,"clickEvent":{"action":"run_command","value":"/execute in minecraft:the_nether run tp @s 9 60 -2"}},": Hello, World!"]
+/tellraw @a ["<Player> ",{"text":"Nether (9 60 -2)","color":"green","underlined":true,"clickEvent":{"action":"run_command","value":"/execute in the_nether run tp 9 60 -2"}},": Hello, World!"]
 ```
 
 ## Limitation
