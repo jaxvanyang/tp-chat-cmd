@@ -8,8 +8,8 @@ on:
 
 env:
   JAVA_VERSION: 17
-  VERSION: 1.1.0
-  RELEASE_NAME: TP Chat Command 1.1.0
+  VERSION: 1.2.0
+  RELEASE_NAME: TP Chat Command 1.2.0
 
 permissions:
   contents: write
@@ -52,6 +52,7 @@ jobs:
           name: ${{ env.RELEASE_NAME }}
           version: ${{ env.VERSION }}
           version-type: release
+          changelog-file: CHANGELOG.md
 
           loaders: fabric
           java: ${{ env.JAVA_VERSION }}

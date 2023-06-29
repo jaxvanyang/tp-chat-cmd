@@ -1,0 +1,2 @@
+- ci(publish): specify changelog file
+- feat: reduce command length for longer description
